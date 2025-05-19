@@ -1,0 +1,68 @@
+JAR VS WAR
+
+- JAR
+    Jar means Java Archive
+    Whereever you need stand alone Java application you have to use only JAR.
+    Package Java standalone applications (non-web apps)
+
+-WAR 
+    War means Web Archive
+    When you need a complete package such as HTML, CSS, JS, JSP... etc, then you should go for WAR. 
+    Package Java web applications (Servlets, JSPs, etc.)
+
+-Earlier we used to use WAR but nowadays in the world of microservices each microservice each component is
+ a standalone application.
+
+
+==============================================ARCHITECTURE================================================================
+
+                       DTO              Utility             Entity            Configuration
+                        |                  |                  |                     |               
+             |-------------------------------------------------------------------------------
+             |                                                                              |
+             |                                                                              |
+             |                                                                              |
+Clients <----|------> Controller -------------> Service <------------------> Repository     |
+             |          Layer                    Layer                          Layer       |
+             |                                                                    |         |
+             |--------------------------------------------------------------------|---------|
+                                                                                  |
+                                                                               DataBase
+
+Clients hit the API's
+
+1st Layer: Controller Layer
+- This layer has all the classes with @Controller, @RestController which hosts to the endpoints. 
+- Controller layer is the first starting point which host the apis. 
+
+2nd Layer: Service Layer
+- This layer is the layer which is annotated with @Service and where we put the Business logic. 
+
+3rd Layer: Repository Layer
+- This layer is annotated with @Repository and which is connected to DB maybe MYSQL, NoSQL.
+- This layer interact with the db, fetch the data, and return to the service layer. 
+- It's used to interact with the db. 
+
+** Apart from these layers there are additional packages which play important role such as:
+ 
+1. DTO (Data Transfer Object): 
+- There are 2 types called as Request DTO and Response DTO. 
+- In Request DTO we map the data which is coming from the client or outside the component to request DTO.  
+- Similary Respnose DTO will send the data after doing all the business logic and fetching databases. It'll
+  send the data back to client via reponse. 
+
+2. Utility
+- Utlility is like its common for Service layers, if there are multiple service layers and there is a common method 
+  which is used by service layer then this method we can put into "Utlitiy package" called  as helper methods. 
+
+3. Entity
+- These are the classes like POJO which consists of certain fields, methods, getter & setters which is a direct
+  representation of a table.
+- Spring DataJPA internally do the mapping. 
+- Entity is direct representation of our tables.
+- Generally it is being used by the Repositories. 
+
+4. Configuration
+- There is a file named as application.properties.
+- Hardcoded values are generally avoided and it should be driven through configuration so that it can be changed without code changes. 
+
