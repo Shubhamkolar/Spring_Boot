@@ -66,3 +66,15 @@ Clients hit the API's
 - There is a file named as application.properties.
 - Hardcoded values are generally avoided and it should be driven through configuration so that it can be changed without code changes. 
 
+
+
+===========================================  What is Maven  =======================================================================
+
+It's a project management tool. Helps developers with:
+  - Build generation
+  - Dependency resolution
+  - Documentation etc.
+- Maven uses POM (Project Object Model) to achieve this. 
+- When "maven" command is given, it looks for "pom.xml" in the current directory & get needed configuration.
+(Only we have to provide what to do maven/what task to do, Rest maven  will take care how to do it..)
+
