@@ -1,0 +1,32 @@
+1. @Controller: It indicates that the class is responsible for handling incoming HTTP requests. Here you have to mention @ResponseBody seperately. 
+2. @RestController: RestController = Controller + ResponseBody (No need to mention @ResponseBody, It's majorly used to tell the spring boot that its not the view that is to render its a HTTP response body send as it is.)
+3. @ResponseBody: 
+    - Denotes that return value of the controller method should be serialized to HTTP respnose body.
+    - If we do not provide ResponseBody, Spring will consider response as name for the view and tries to resolve and render it (in case we are using the @Controller annotation)
+4. @RequestMapping: majorly used when the api point is common we (@RequestMappig(value="/api/")) 
+    - Value, path (both are same)
+    - method
+    - Consumes, produces
+    - @Mapping
+    - @Reflective({ControllerMappingReflectiveProcessor.class})
+ @RequestMapping(path="/fetchUser", method=RequestMethod.GET, consumes="application/json", procedures="application/json")
+
+5. @RequestParam: Used to bind, requeset parameter to controller method parameter.
+ http://localhost:8080/api/fetchUser?firstName=SHUBHAM&lastName=KOLAR&age=24
+     - The framework automatically performs type conversion from the request parameter's string representation to the spicified type.
+
+6. @PathVariable: Used to extract values from the path of the URL and help to bind it to controller method parameter. 
+    @GetMapping(path="/fetchUser/{firstName}")
+    public String getUserDetails(@PathVariable(value="firstName") String firstName){
+        return "fetching and returning user details based on first name: " + firstName;
+    }
+
+7. @RequestBody: Bind the body of HTTP request (typically JSON) to controller method parameter (java object).
+
+8. ReponseEntity: It represents the entire HTTP response 
+    Header, Status, response body etc. 
+    @GetMapping(path="/fetchUser")
+    public ResponseEntity<String> getUserDetails(@RequestParam(value="firstName") String firstName){
+        String output = "fetched User details of " + firstName;
+        return ResponseEntity.status(HttpStatus.OK).body(output);
+    }
