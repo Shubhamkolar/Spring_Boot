@@ -1,0 +1,62 @@
+What is bean?
+- In a Simple terms, Bean is a Java Object, which is managed by Spring container (also known as IOC container).
+- IOC Container: contains all the beans which get created and also manage them. Complete end to end management of BEAN is done by IOC.
+
+                                                                How to Create a Bean?
+1. @Component Annotation                                                                            2. @Bean Annotation
+- @Component annotation follows "convention over configuration" apprach.
+- Means Spring boot will try to auto configure based on conventions reducing
+  the need for explicit configuration.
+- @Controller, @Service etc. all are internally tells Spring to create bean
+  and manage it. 
+
+When you'll provide your own constructor java will not provide the default constructor. 
+Spring won't be able to create an object because there is not default constructor and 
+it dosent't know what to pass in the constructor parameters. It'll fail to start. 
+
+So what to do?
+@Bean comes into the picture, where we provide the configuration details and tells Spring
+boot to use it while creatinng a Bean. 
+
+If we add 2 times in Configuration file, Spring will create 2 beans of it and managed by IOC
+
+Q. How Spring boot find these Beans?
+=>  1.  Using @ComponentScan annotation, it'll scan the specified package and sub-package for classes
+        annotated with @Component, @Service, etc. 
+    2.  Through Explicit defining of bean via @Bean annotation in @Configuration class. 
+        @Configuration is the @Component itself. 
+
+                                                            
+                                                            
+                                                            At what time these beans get created??
+                                                                                |                                                
+                                                                                |
+            ---------------------------------------------------------------------------------------------------------------------------------------
+            |                                                                                                                                     |
+        Eagerness                                                                                                                                Lazy
+- Some Beans get created, When we start up an application.                                                          - Some Beans get created Lazily, means when they actually needed. 
+- For ex: Beans with Singleton Scope are Eagerly initialized.                                                       - For ex: Beans with Scope like Prototype etc. are Lazily initialized.   
+                                                                                                                                        OR
+                                                                                                                        Beans with @Lazy annotation. 
+
+===================================================================== Life Cycle of Bean ===============================================================================
+
+
+        Application Start---> IOC Container Started--> Construct Bean-----
+                                                                          |
+                                                                          | 
+                                                                  Inject Dependency
+                                                                 into Constructed Bean
+                                                                          |
+                                                                          |
+        Bean Destroyed <----- @PreDestroy <----- Use the Bean <---- @PostConstruct
+
+1. When you start an application it'll internally invoke the IOC. Now IOC will scan for the beans using @ComponentScan & @Configuration.
+   and look for all the beans it has to create. 
+2. Then it'll construct the bean if it is Eagerly initialized if some beans or required even though lazy it'll invoke it. 
+3. When the bean is fully constructed and the Dependency is also injected into it and now its ready to use. Before ready to use it we can 
+   use @PostConstruct for perform any task. 
+4. Now the bean is into action... You can use into your application.
+5. Bean is about to destroy and if you want to perform any task before it actually gets destroyed then use @PreDestroy. 
+6. Bean Destroyed. 
+  
