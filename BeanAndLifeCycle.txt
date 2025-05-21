@@ -51,12 +51,12 @@ Q. How Spring boot find these Beans?
                                                                           |
         Bean Destroyed <----- @PreDestroy <----- Use the Bean <---- @PostConstruct
 
-1. When you start an application it'll internally invoke the IOC. Now IOC will scan for the beans using @ComponentScan & @Configuration.
+1. During Application Startup, Spring boot invokes IOC Container. (ApplicationContext provides the implementation of IOC container)
+2. When you start an application it'll internally invoke the IOC. Now IOC will scan for the beans using @ComponentScan & @Configuration.
    and look for all the beans it has to create. 
-2. Then it'll construct the bean if it is Eagerly initialized if some beans or required even though lazy it'll invoke it. 
-3. When the bean is fully constructed and the Dependency is also injected into it and now its ready to use. Before ready to use it we can 
+3. Then it'll construct the bean if it is Eagerly initialized if some beans or required even though lazy it'll invoke it. 
+4. When the bean is fully constructed and the Dependency is also injected into it and now its ready to use. Before ready to use it we can 
    use @PostConstruct for perform any task. 
-4. Now the bean is into action... You can use into your application.
-5. Bean is about to destroy and if you want to perform any task before it actually gets destroyed then use @PreDestroy. 
-6. Bean Destroyed. 
-  
+5. Now the bean is into action... You can use into your application.
+6. Bean is about to destroy and if you want to perform any task before it actually gets destroyed then use @PreDestroy. 
+7. Bean Destroyed. 
