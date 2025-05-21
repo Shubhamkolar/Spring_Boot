@@ -1,0 +1,69 @@
+What is Dependency Injection?
+- Using Dependecy Injection, we can make our class independent of its dependencies. 
+- It helps to remove the dependency on concrete implementation and inject the dependencies from external source. i.e Spring
+- It breaks Dependency Inversion rule of S.O.L.I.D principle. 
+- This principle says that DO NOT depend on concrete implementation, rather depends on abstraction. 
+
+@Autowired, first look for a bean of the required type.
+- If bean found, Spring will inject it. 
+
+Different ways of Injection and which one is better?
+    - Field Injection
+    - Setter Injection
+    - Constructor Injection (In Industry we mostly used Constructor injection)
+
+1. Field Injection 
+    - Dependecy is set into the fields of the class directly.
+    - Spring uses reflection, it iterates over the fields and resolve the dependency. 
+ ** Advantage:   
+    - Very simple and easy to use. 
+ ** Disadvantage:
+    - Can not be used with Immutable fields. 
+    - You can't use final. 
+    - Chances of Null Pointer Exception. 
+    - During Unit Testing, setting MOCK dependency to this field becomes difficult. 
+
+
+2. Setter Injection
+    - Dependecy is set into the fields using the setter method. 
+    - We have to annotate the method using @Autowired. 
+ ** Advantage:
+    - Dependecy can be changed any time after the object creation (as object can not be marked as final)
+    - Ease of testing, as we can pass object in the dependency easily. 
+ ** Disadvantage:
+    - Field can not be marked as final (We can not make it immutable.)
+    - Difficult to read and maintained, as per standary, object should be initialized during object creation, so this might create code readability issue. 
+
+
+3. Constructor Injection
+    - Dependecy get resolved at the time of initialization of the Object itself. 
+    - Its recommended to use. 
+    - When only 1 constructor is present, then using @Autowired on constructor is not mandatory. (from Spring version 4.3)
+    - When more than 1 constructor is present, then using @Autowired on constructor is mandatory.
+
+-------------------Why Constructor Injection is Recommended  (Advantages):-------------------
+
+1. All mandatory dependencies are created at the time of initialization itself. Makes 100% sure that our object is fully 
+   initialized with mandatory depedency. 
+        i. avoid NPE during runtime. 
+       ii. Unnecessary null checks can be avoided too. 
+2. We can create immutable object using Constructor injection. 
+3. Fail Fast: If there is any missing dependency, it will fail during compilation itself, rather than failing during run Time. 
+4. Unit testing is easy.
+
+
+--------------------------- Common Issues when dealing with Dependency Injection ---------------------------
+
+1. CIRCULAR DEPENDENCY
+SOLUTION: 
+    - First and foremost, can we refactor the code and remove this cycle depedency:
+      For example, common code in which both are dependent, can be taken out to seperate class. This way we can break the circular depedency. 
+    - Using @Lazy on @Autowired annotation.
+      Spring will create proxy bean instead of creating the bean instance immediately during application startup. 
+    - @Lazy on setter injection. 
+    - Use @Primary annotation: This tell that give the first priority who has been annotated with @Primary
+    - Using @Qualifier annotation: Application will provide a name. Use @Qualifier and give some name to it.  
+
+
+
+2. UNSATISFIED DEPENDENCY
