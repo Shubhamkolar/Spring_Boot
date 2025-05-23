@@ -54,7 +54,7 @@ Different ways of Injection and which one is better?
 
 --------------------------- Common Issues when dealing with Dependency Injection ---------------------------
 
-1. CIRCULAR DEPENDENCY
+CIRCULAR DEPENDENCY
 SOLUTION: 
     - First and foremost, can we refactor the code and remove this cycle depedency:
       For example, common code in which both are dependent, can be taken out to seperate class. This way we can break the circular depedency. 
@@ -65,5 +65,3 @@ SOLUTION:
     - Using @Qualifier annotation: Application will provide a name. Use @Qualifier and give some name to it.  
 
 
-
-2. UNSATISFIED DEPENDENCY
