@@ -1,0 +1,23 @@
+                                                                                @Async Annotation
+
+
+- Imagine you're at a pizza shop. You place an order, and instead of waiting at the counter until the pizza is ready, they tell you:
+“You can go sit. We'll bring it to your table when it's done.”
+
+That’s what @Async does!
+It lets your program say: Hey, go do this big task (like sending an email) in the background. I’ll keep working on other stuff.
+
+@Async is a Spring Boot annotation used to run methods in the background — so your main thread doesn't get stuck waiting.
+- It's part of Spring's Asynchronous support, and helps you improve performance and user experience.
+
+
+Real-Life Use Cases:
+| Task                   | Why use @Async?                           |
+| ---------------------- | ----------------------------------------- |
+| Send an email          | Don't keep the user waiting               |
+| Generate a report      | Takes time — better run in background     |
+| Call third-party API   | Don't let slow services block your system |
+| Send SMS/notifications | Better done in parallel                   |
+| Upload/download files  | Keeps the main flow responsive            |
+
+
