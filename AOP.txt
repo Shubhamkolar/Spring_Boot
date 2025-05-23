@@ -1,0 +1,50 @@
+                                                            AOP (Aspect Oriented Programming)
+    
+- In simple term, It helps to Intercept the method invocation and we can perform some task before and after the method. 
+- AOP allows us to focus on business logic by handling boilerplate and repetitive code like logging, transaction management etc. 
+- So, Aspect is a module which handle this repetitive or boilerplate code.
+- AOP is like a "side helper" in your code that handles common things (like logging, security, or transactions) without you writing that code again and again in every method. 
+- Instead of writing that logic in every method, you write it once using AOP and Spring will automatically run it wherever you need!
+- Helps in achieving reusability, maintainability of the code. 
+
+Used during:
+- logging
+- Transaction management
+- Securtiy etc..
+
+
+In Spring Boot, you use:
+*  @Aspect → to define your helper
+*  @Before, @After, @Around → to say when the helper runs
+*  @EnableAspectJAutoProxy → enables AOP (built into Spring Boot)
+
+
+Core Concepts in AOP:
+| Term           | Description                                                              |
+| -------------- | ------------------------------------------------------------------------ |
+| Aspect         | A module that encapsulates a cross-cutting concern (e.g., LoggingAspect) |
+| Advice         | Action taken at a particular join point (e.g., before, after, around)    |
+| Join Point     | A point during execution (like method call) where advice can be applied  |
+| Pointcut       | Expression that matches join points (e.g., all methods in a package)     |
+| Weaving        | Linking aspects with other application types or objects at runtime       |
+
+
+Use Cases of AOP:
+| Use Case               | Description                                  |
+| ---------------------- | -------------------------------------------- |
+| Logging                | Log method calls, parameters, execution time |
+| Security               | Check authorization before method execution  |
+| Transaction Management | Start/commit/rollback DB transactions        |
+| Auditing               | Track changes to important business methods  |
+| Exception Handling     | Capture and process exceptions uniformly     |
+
+
+
+Limitations of Spring AOP:
+
+-Only works on Spring beans
+-Based on proxies, so doesn't work with internal method calls
+-Can’t apply aspects to final methods/classes
+
+
+
