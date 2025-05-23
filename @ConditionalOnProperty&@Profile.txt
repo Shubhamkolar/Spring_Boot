@@ -1,0 +1,65 @@
+- @ConditionalOnProperty is an annotation in Spring Boot (provided by spring-boot-autoconfigure) that allows you to conditionally enable or disable a bean based on the value of a configuration property like one in application.properties or application.yml
+- It helps in conditional bean registration based on configuration properties. This is especially useful in auto-configuration classes or when creating beans that should only be active under certain conditions.
+
+- Syntax: @ConditionalOnProperty(name = "property.name", havingValue = "expectedValue", matchIfMissing = false)
+
+- The bean will only be created if (___).enabled=true is set in application.properties.
+- If it's set to false or not set at all, the bean won’t be registered.
+
+
+
+ Q. You have 2 Application and 1 common code base, how you will make sure that, BEAN is only created for 1 Application, not for other?
+ -> @ConditionalOnProperty annotation 
+    @Profile annotation. 
+ - Yes, using both we can achieve this requirement. But @Profile is technically intended for environment seperation rather than application specific bean creation. 
+ 
+
+ Q. What does Profiles means in SpringBoot?
+ -> We have a application.properties so we can different environments and you can have multiple application.properties such as:
+
+                                                application.properties
+                                                            |
+               -----------------------------------------------------------------------------------------------------
+               |                                            |                                                       |
+application-{profile1}.properties          application-{profile2}.properties  ..........           application-{profileN}.properties 
+
+- You can have multiple application.profiles based upon the profiles you have.
+
+application.properties
+username = defaultUsername
+password = defaultPassword
+spring.profiles.active = dev (Just set the profile which needs to be active and the Springboot will take the configuration from the respective application.properties)
+
+@Component
+public class MySQLConnection{
+
+   @Value("${username}")
+   String username;
+
+   @Value("${password}")
+   String password;
+
+   @PostConstruct
+   public void init(){
+      System.out.println("username: " + username + " password: " + password);
+   }
+}
+
+// When you'll run the application it give priority to application-dev.properties since we have set spring.profiles.active=dev 
+// Spring.profiles.active will tell that which configuration you have to pick. 
+
+- We can pass the value to this configuration "spring.profiles.active" during a application startup itself. 
+- mvn spring-boot:run (this is same as what we do using run in Intellij) 
+- use this command "mvn spring-boot:run -Dspring-boot.run.prfiles=prod (To tell Springboot dynamically which environment you are working on..)
+- It'll set to "prod" if not set then it'll use the default one from application.properties. 
+
+
+// Another way using "Adding this in Pom.xml in maven"
+
+                     ******************* What is @Profile annotation? *******************
+Using @Profile annotation, we can tell spring boot, to create bean only when particular profile is set. We can also set multiple profiles at a time. 
+
+
+                                 **************** IMPORTANT ****************
+- USE @ConditionalOnProperty annotation rather than using @Profile for "Conditinally creating a Bean"
+- Use @Profile if working on "Different environments" such as development, stage, live production environments. 
