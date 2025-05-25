@@ -1,0 +1,69 @@
+                                            User Creation
+
+- Before, we proceed with User Authentication and Authorization methods, we first need to see, User creation process because that's first step. 
+- Authentication and Authorization of User will happen only after User is created. 
+
+- We need to add the below dependencies: 
+    -> spring-boot-starter-security   => Provides core features like Authentication, Authorization, Security filters, etc. 
+
+- When we start the server user is created automatically with default username: "user"
+- Random password is generated in the logs for testing. 
+- Each time, server is restarted, new random password will be generated.
+
+                                    How we can control the user creation logic?
+
+1. Using application.properties(not recommended, only for development and tesing)
+ex. of application.properties 
+    
+    spring.security.user.name = my_username                     Internally, it uses reflection and calls 
+    spring.security.user.password = my_password         ====>   setUsername() and setPassword() method of 
+    spring.security.user.roles = ADMIN                          SecurityProperties.java and overrides the default values. 
+
+Now, during application startup, no default username and default password is created. 
+By application.properties we can only do for 1 user.
+- First in security.properties.user which has default user and password.
+- Then it try to create an object of Internal memory User Detail Manager, when it creates the object of it accepts the details of UserDetails and ultamitely put into cache. 
+- If you want to create more than 1 users then InMemoryUserDetailsManager can accepts more than 1 users. We can pass as many as users we wanted. 
+
+
+                                    UserDetailsService (Interface)
+                                            |
+                                            |
+                                    UserDetailsManager
+                                            |
+                                            |
+                                  InMemoryUserDetailsManager (concrete class- so we can create an object of it)
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig{
+
+    @Bean
+    public UserDetailsService userDetailsService(){
+        userDetails user1 = User.withUsername("my_username_1")
+                    .password("{noop}my_password_1")        {noop} means no encoding or hashing
+                    .roles("ADMIN")
+                    .build();
+        
+        UserDetails user2 = User.withUsername("my_username_2")
+                    .password("{noop}1234")                 {noop} means no encoding or hashing
+                    .roles("USER")
+                    .build();
+
+// "noop" means what would be the storage the password will be no hashed or encoded it'll be plain text.  
+        return new InMemoryUserDetailsManager(user1, user2);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+2. By creating custom InMemoryUserDetailsManager Bean (not recommended, only for development and testing)
