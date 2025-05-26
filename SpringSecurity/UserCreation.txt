@@ -12,6 +12,7 @@
 
                                     How we can control the user creation logic?
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 1. Using application.properties(not recommended, only for development and tesing)
 ex. of application.properties 
     
@@ -23,13 +24,18 @@ Now, during application startup, no default username and default password is cre
 By application.properties we can only do for 1 user.
 - First in security.properties.user which has default user and password.
 - Then it try to create an object of Internal memory User Detail Manager, when it creates the object of it accepts the details of UserDetails and ultamitely put into cache. 
-- If you want to create more than 1 users then InMemoryUserDetailsManager can accepts more than 1 users. We can pass as many as users we wanted. 
 
 
-                                    UserDetailsService (Interface)
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. By creating custom InMemoryUserDetailsManager Bean (not recommended, only for development and testing)
+- If you want to create more than 1 users, InMemoryUserDetailsManager can accepts more than 1 users. We can pass as many as users we wanted. 
+
+
+                                    UserDetailsService (Interface) (PARENT)
                                             |
                                             |
-                                    UserDetailsManager
+                                    UserDetailsManager              (CHILD)
                                             |
                                             |
                                   InMemoryUserDetailsManager (concrete class- so we can create an object of it)
@@ -40,30 +46,221 @@ public class SecurityConfig{
     @Bean
     public UserDetailsService userDetailsService(){
         userDetails user1 = User.withUsername("my_username_1")
-                    .password("{noop}my_password_1")        {noop} means no encoding or hashing
+                    .password("{noop}my_password_1")        // {noop} means no encoding or hashing
                     .roles("ADMIN")
                     .build();
         
         UserDetails user2 = User.withUsername("my_username_2")
-                    .password("{noop}1234")                 {noop} means no encoding or hashing
+                    .password("{noop}1234")                 // {noop} means no encoding or hashing
                     .roles("USER")
                     .build();
 
 // "noop" means what would be the storage the password will be no hashed or encoded it'll be plain text.  
-        return new InMemoryUserDetailsManager(user1, user2);
+        return new InMemoryUserDetailsManager(user1, user2);  // (Creating objects)
+    }
+}
+
+The default, format for storing the password is: {id}encodedpassword
+
+{id} can be either:
+    - {noop}
+    - {bcrypt} 
+    - {sha256}
+    - Etc..
+
+-- During User password storing step, if we want to store user password without any encoding or hashing, then we store "{noop}plain_password"
+-- Now, during Authentication process:
+    - 1st, it will fetch the user password from inMemory.
+    - 2nd, it goes for comparing logic, inMemory password and password provided for Authentication.
+    - 3rd, it will take out the {noop} or {bcrypt} etc. from inMemory password.
+    - 4th, Then if its {noop}, it will directly compare the remaining inMemory password and provided password for Authentication.
+    - 5th, if say its {bcrypt}, it first do hasing of provided password using BCryptPasswordEncoder and then match it with remaining inMemory Password.
+
+
+
+        PasswordEncoder-----
+                            |
+                            |--- DelegatingPasswordEncoder (default) => It work is to delegate to other PasswordEncoder based on {id}
+                            |--- BCryptPasswordEncoder
+                            |--- NoOpPasswordEncoder
+                            |--- ......
+
+
+Lets say, if we want to store the hashed password (hashed using bcrypt algorithm)
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig{
+    
+    @Bean
+    public UserDetailsService userDetailsService(){
+        userDetails user1 = User.withUsername("my_username_1")
+                    .password("{bcrypt}" + new BCryptPasswordEncoder().encode("my_password_1"))
+                    .roles("ADMIN")
+                    .build();
+
+        return new InMemoryUserDetailsManager(user1);
+    }
+}
+
+- Now here the password is "bcrypt" SpringSecurityFramework will takeout and goes to DelegatingPasswordEncoder first and then it'll take out 
+  the id and will get to know that it's a BCryptPasswordEncoder so use it for the same and ultamitely match it. 
+
+- In Memory, password is stored as : {bcrypt}hased_password and during authentication,
+  I am providing "my_password_1"
+
+- But still I am able to successfully authenticate because of DelegatingPasswordEncoder, it first checks the format of stored password {id} i.e.
+  {bcrypt}, so it passes the incoming password to BCryptPasswordEncoder, and after hashing, it has done the matching. 
+
+
+*** If, we don't want to store {bcrypt} or any other hashing algo {id} in front of password, then we can define which PasswordEncoder to use. 
+Now, since we are always using 1 encoding/hashing algorithm, and control will not goes to "DelegatingPasswordEncoder", and it will directly goes to 
+specific Password Encoder, so now no need to put {id} in front of password.
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig{
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){           // PasswordEncoder(Interface)
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService(){
+        UserDetails user1 = User.withUsername("my_name")
+                    .password(new BCryptPasswordEncoder().encode("my_password1"))
+                    .roles("ADMIN")
+                    .build();
+        
+        return new InMemoryUserDetailsManager(user1);
+
     }
 }
 
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Storing UserName and Password (after hashed) in DB (recommended for production)
+   While in production the password should be properly hashed, also it should be dynamic.
+
+Since we need to store the details into DB we need to create an Entity so that we can have the control.
+
+[a] UserAuthEntity.java
+
+@Entity
+@Table(name="user_auth")
+public class UserAuthEntity implements UserDetails{                                     //  Why we are implementing UserDetails??
+                                                                                            Implements UserDetails because, During Authentication (form, basic, jwt, etc..), security 
+    @id                                                                                     framework tries to fetch the user and return the object of UserDetails only, if we don't 
+    @GeneratedValue(strategy = GenerationType.IDENTITY)                                     implement it, then we have to do the mapping (from UserAuthEntity to UserDetails)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    private String role;
+
+    @override
+    public Collection<? extends GrantedAuthority> GrantedAuthorities(){
+        return List.of(new SimpleGrantedAuthority(role));
+    }
+
+    @override
+    public boolean isAccountNonExpired() {  return true;    }
+
+    @override
+    public boolean isAccountNonLocked() {   return true;    }
+
+    @override
+    public boolean isCredentialNonExpired() {   return true;    }
+
+    // getters and setters.....
+
+}
+
+[b] UserAuthEntityRepository.java
+
+@Repository 
+public interface UserAuthEntityRepository extends JpaRepository<UserAuthEntity, long> {
+    Optional<UserAuthEntity> findByUsername(String username);
+}
 
 
 
+[c] UserAuthEntityService.java
+
+@Service 
+public class UserAuthEntityService implements UserDetailsService{                       //   WHY???
+                                                                                        //   During user creation we don't need it, we store it in DB or InMemory
+        @Autowired                                                                           But in Authentication it is required, Spring framework first tries to  
+        private UserAuthEntityRepository userAuthEntityRepository;                           fetch the username from DB or InMemory for InMemory it knows how to fetch
+                                                                                             it but from DB it don't, from which table it needs to fetch it.. so we 
+        public UserDetails save(UserAuthEntity userAuth)                                     created the table and wrote the service class. We know: 
+                return userAuthEntityRepository.save(userAuth);                              
+        }                                                                                                    USER DETAIL Service
+                                                                                                                    |
+        @Override                                                                                                   |
+        public UserAuthEntity loadUserByUsername(String username) throws UsernameNotFoundException{                 |
+            return userAuthEntityRepository.findByUsername(username)                                                |
+            .orElseThrow(() ->  new UsernameNotFoundException("User not found"));                             UserDetailsManager
+        }                                                                                                           |
+                                                                                                                    |
+                                                                                                                    |------------------------------------------------
+                                                                                                            InMemoryUserDetailManager                               |
+                                                                                                                                                    UserAuthEntityService (So that it comes to the child of USER DETAIL MANAGER and kept in parallel to InMemory)
+[d] UserAuthController.java
+
+@RestController
+@RequestMapping("/auth")
+public class UserAuthController{
+
+    @Autowired
+    private UserAuthEntityService userAuthEntityService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody UserAuthEntity userAuthDetails){
+        // Hash the password before saving
+        userAuthDetails.setPassword(passwordEncoder.encode(userAuthDetails.password()));
+
+        // Save user
+        userAuthEntityService.save(userAuthDetails);
+        return ResponseEntity.ok("User registered successfully!");
+    }
+
+}
 
 
+Now, by default in spring boot securtiy, all the endpoints are AUTHENTICATED, means we have to authenticate ourself by either username/password or JWT etc... 
+To access any API, so how we will access "/auth/register" API, which is just a first step to create user.
 
+Yes, we have to relax/bypass the authentication for this API and its industry standard..
 
+[e] SecurityConfig.java
 
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig{
 
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
 
-
-2. By creating custom InMemoryUserDetailsManager Bean (not recommended, only for development and testing)
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        http
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/auth/register").permitAll()          // skipping this API, no authentication will be provided
+                    .myRequest().authenticated()
+            )
+            .csrf(csrf  ->  csrf.disable())
+            .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
