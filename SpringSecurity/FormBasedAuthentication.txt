@@ -1,0 +1,81 @@
+                                                                Form Login Authentication
+
+- It's a stateful authentication method.
+        - Stateful authentication means, server maintains the user authentication state (aka session).
+        - So that user don't have to provide username/password everytime with each request. 
+           
+- User enters their credentials (i.e. username/password) in an HTML login form. 
+- On successful authentication, a session (JSESSIONID) is created to maintain the user authentication state across different requests.
+- Now, with subsequent requesst, client only passes JSESSIONID and not username/password. And server validates it with stored JSESSIONID. 
+
+
+****** It's a Default Authentication Method of Springboot Security ******
+- Default Login URL: /login
+- Default Logout URL: /Logout
+
+- By default, Time to live for the HTTP Session is 30 mins (depends on servlet container). But we can configure it too.
+- Yes, we can store the HTTP Session in DB too. 
+
+In application.properties we can change the servlet session timeout
+    - server.servlet.session.timeout = 1m
+
+- Now, after 1 minute of inactivity makes the session expires.
+  Note: if user activity keeps on happening, it will keep on re-authentication and after 1 min session will not get expired. 
+
+--------------------------------- We can also store the session in the DB ---------------------------------
+
+Add below dependency in Pom.xml
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-jdbc</artifactId>
+<dependency>
+
+
+Add below config in application.properties
+spring.session.store-type = jdbc
+spring.session.jdbc.initialize-schema = always  // SpringBoot, will automatically create and manage "SPRING_SESSION" table for us. 
+server.servlet.session.timeout = 5m 
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Now, let say, I want to change few things like: 
+    - Default login and logout page
+    - Need to relax authentication on few endpoints etc... 
+Then we can override above default SecurityFilterChain method. 
+If there are public api's then we can write our own SecurityFilterChain
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+Now, form based Authenticatoin is done, but still one thing is left i.e. AuthorizationFilter
+
+- Once the user is Authenticated, and when user is trying to access any resource, authorization check is mandatory. 
+- It is done to make sure, User has the permission to access it. 
+- By-default, SpringBoot Security do not put any restriction on any resource, we have to do it manually.
+
+- Now I am manually restricting that any user trying to access "/users" endpoint, should have "ROLE_USER" role.
+- While using hasRole, we don't need to add "ROLE_" it get appended automatically.
+- Now in AuthorizationFilter, it will validate does endpoint has any restriction (i.e. user should have any specific role), if Yes, then it 
+  matches the role present in SecurityContext and what is required for the endpoint.
+- If required role is missing, it will throw FORBIDDEN exception. 
+
+- Generally, we can give any name to the Role like ADMIN, USER, ANONYMOUS etc...
+  As its just a String. But should follow the proper meaning. 
+- Also more than 1 roles can be assigned to a User. 
+
+
+Q. How to control the Session per user??
+=> 1 user can keep on login in different browsers, so how to restrict per user session limit.
+
+.sessionManagement(session  ->  session
+    .maximumSessions(1)
+    .maxSessionPreventsLogin(true))
+    .formLogin(Customizer.withDefaults());
+return http.build();
+
+
+
+================================================================== DISADVANTAGES OF FORM BASED AUTHENTICATION ==================================================================
+1. Vulnerable to Security issues like CSRF and Session hijacking:
+   By default, CSRF is enabled for form based login and we should not disable it. 
+
+2. Session Management is big overhead and in case of distributed system it can lead to scalability issues. 
+
+3. Database load: If there are multiple servers then we might need to store the session in DB or Cache, which again required memory and lookup time. Which can cause latency issue. 
