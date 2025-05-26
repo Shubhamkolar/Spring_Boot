@@ -1,0 +1,53 @@
+                                                        Basic Authentication
+
+- It's a Stateless Authentication method.
+    - Stateless authentication means, server do not maintain the user authentication state (aka Session).
+    - No session is maintained by the server.
+- In this, client has to pass the username and password with every request using Authorization header 
+  Authorization: Basic <base64(username:password)>
+- These Credentials are encoded using Base64 (not encrypted), making it insecure over HTTP. 
+
+
+Q. Why we need to send username and password in Authorization header, why not in Request body or any other way??
+=> 
+    1. Standard:
+       As per HTTP Standardization (RFC 7617), this format is accepted, in order to make it universally accepted standard across APIs and Clients.
+       Otherwise, if there is no Standard follows and some send in Headers, some in body etc, then its difficult when need to deal with multiple APIs and clients.
+
+    2. Security:
+       Web servers sometimes log the request body for debugging or analytics purpose. But Headers are typically not logged.
+       So this reduce the risk of exposures of client username and password. 
+    
+    3. Support for all HTTP request:
+       Apart from POST & PUT, there are HTTP requests like GET which do not accept any Request body. So with Headers for such 
+       APIs too, credentials can be sent consistently. 
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig{
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        http.authorizeHttpRequests(auth ->  auth
+                .requestMatchers("/api/users").hasAnyRole("USER")       ------> Added for authorization
+                .anyRequest().authenticated())
+            .sessionManagement(session  ->  session
+                .sessionCreationPolicy(sessionCreationPolicy.STATELESS))   -------> It's a STATELESS method
+            .csrf(csrf  ->  csrf.disable())                             -----------> Since it's STATELESS, csrf is not required
+            .httpBasic(Customizer.withDefaults());      -------> Basic authentication method to be used. 
+    return http.build();
+    }
+}
+
+------------------------------------------------------------ DISADVANTAGES OF BASIC AUTHENTICAITON ------------------------------------------------------------
+
+1. Credentials sent in every request, if HTTPS is not enforced, then it can be intercepted and then decoded.
+
+2. If Credentials are compromised, then only way is to change the credentials.
+
+3. Not suitable for large scale application, as sending credentials with every request is an extra overhead.
+    i. As request size increases becuase of a authorization header.
+   ii. Extra work like decoding, hashing of incoming password, fetching username and password from DB, comparing etc...
+  iii. DB lookup to fetch user details which increases latency too.  
