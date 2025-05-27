@@ -1,0 +1,163 @@
+Q. What is JWT (JSON Web Token)?
+- It's provides a secure way of transmitting information between parties as a JSON object.
+- It's basically a key-value pair.
+- This information can be verified because its digitally signed using RSA (public/private key value pair) etc. 
+
+Q. Where to use JWT??
+- Used for AUTHENTICATING (confirming the user identity) (If I'm shubham it verifies that I'm shubham, the msg is comming from shubham)
+- Used for AUTHORIZATION (checks the user permission before providing access to resources) (Does shubham has the authority to fetch this detail or not?)
+- Used for SSO (Single Sign On) i.e. Authenticate once and access multiple applications. 
+
+--------------------------------------------------------------------- ADVANTAGES -------------------------------------------------------------------------------------
+1. Compact: Because of its size, it can be inside an HTTP header itself, And due to its size transmission is fast.
+
+2. Self Contained/Stateless: The payload contains all the required information about the user, thus it avoid querying the database.
+
+3. Can be signed using Symmetric (HMAC) or Asymmetric (RSA).
+
+4. Built in expiry mechanism.
+
+5. Custom claim (additional data) can be added in the JWT. 
+
+----------------------------------------------------------------- JWT --------------------------------------------------------------------------------------------------------------------------------
+
+1. As a client first login with Username and Password, it'll go to the Authentication Server (Third party application which supports token generation and validation).
+2. JWT will generate the token and return it. Now client has the JWT. 
+3. Client wants to access the resource, Request to access the User Resources and Sends Token in Authorization Header. 
+   The Resource Server will internally call the API of Authentication Server to validate various part of the tokens, this will tell this token is verified. 
+4. Once the token is valid and granted it Sends Response to the Client. 
+-  JWT is Stateless, There is no DB touch. Whatever JWT token is returned it'll have all the details such as expiry, etc... 
+
+
+
+---------------------------------------------------------------- JSssionID --------------------------------------------------------------------------------------------------------------------------
+
+Q. Before we understand more about JWT, lets first understand, what was popular before JWT and what are the problems with it?
+=> Sessin ID or JSessionID
+- It used to login with username and password in the same Authorization/Authentication third party server, Generally Resource Server used to perform the same task also. 
+- There was no third party library.
+- It'll create the session ID and save it into DB and store all the information like expiry time, SessionID, Roles, etc... SessionID (which is unique random key) will 
+  be given back to the client. 
+- Now with this unique id whenever it sends a request in the Cookies the client will also pass the JSession ID. 
+- The Resource server has to call the server now with the JSession ID fetch all the details, do all the logic, once validated it'll send the resoponse else it'll throw error.
+- Everytime you are hitting a request to fetch the details it is  hitting the DB to fetch the details from the JSession ID. 
+  Since while creating the ID it was stored in the DB and its statefull. 
+
+================================ Disadvantages ================================ 
+- Stateful: It rely on server side state maangement, it cause problem in distributed systems. 
+- Its just a unique random string, when server get this id, it has to perform DB query to fetch the details. 
+- During your get request your application has to query the DB perform validation on top of it, there would be 
+  extra latency on top of it. 
+
+
+-------------------------------------------------------------------- JWT STRUCTURE ----------------------------------------------------------------------------------------------------------------------
+
+Whenever we are taking about JWT, ultimately we are taking about JSW, JWT & JWS are always use together
+
+
+                                                                     JWT / JWS / JWE
+
+                                                                      JWT Structure
+                                                           (aaaaaaaaaa.bbbbbbbbbb.cccccccccc)
+                                                                |          |           |
+                                                                |          |           |
+                                    -----------------------------          |           --------------------------------------------                
+                                    |                                      |                                                      |
+                                    |                                      |                                                      | 
+                                  Header                                Payload                                               Signature
+                              
+                           {                               {                                                               RSASHA256(
+                              "typ":"JWT",                   "iss":"https//example.com/auth",                              Base64UrlEncode(Header) + "." + E
+                              "alg":"RSA",                   "sub":"1234567890",                                           Key
+                              "kid":"sfdsf231121"            "exp":1711850905,                                             )
+                           }                               "email":"skolar@gmail.com",
+                                                             "jti":"unique_id_1212121"
+                                                            }
+Header:
+- Contains metadata information of the token. (ALWAYS JWT)
+- typ: Type of the token, generally JWT always we add here.
+- alg: Signing algorithm used like RSA(ASymmetric cryptography key) or HMAC(Symmetric key) etc..
+
+
+Payload:
+- Contains Claims(or in simple terms, User information or any additional information is kept here)
+- JWT understand this as a claims(just an information whatever you want to keep)
+- NEVER mention some confidential information under payload.
+
+                                                                             CLAIMS
+                       -----------------------------------------------------------------------------------------------------------------------
+                       |                                                        |                                                            |
+                       |                                                        |                                                            |
+              Registered Claims                                            Public Claims                                               Private Claims
+              (predefined names and meaning)                            (It's a custom claim, which can be                       (It's a custom claim, which are intended
+                                                                        shared and understand by multiple                         for internal use only and not standardized, nor
+      - iss (Issuer): entity that issued the JWT                        parties)                                                  expected that other parties understand this)
+      - sub (Subject): identifies the user.
+      - aud (Audience): identifies the recipient for which token is intended.
+      - exp (Expiration Time): After this time, token is not valid.
+      - nbf (Not Before): Time before this, Token should not be accepted.
+      - jti (JWT id): Unique JWT ID.
+
+
+Signature:
+- Encode JWT Header and Payload separately using Base64 encoding.
+  base64 Encode(Header). base64 Encode(Payload)
+- Concatenate the Encoded Header and Payload strings using "."
+  (ex: xxxxxxxxxx.yyyyyyyyyy) This is known as message.
+- Use RSA(Asymmetric cryptography) or HMAC(symmetric cryptography) to create digital Signature.
+- Encode the signature in previous step.
+  base64 Encode(Header).base64 Encode(Payload).base64 Encode(Signature)
+- Concatenation using "."
+
+- Dummy JWT sample:
+  ewrerwerwetwet324.2423dfdsfasdgas54344.fadsfasd4343gfsdsadf
+   
+** Sample API Request:
+curl--location--requestGET'https://exampleHost.com:12345/api/resource'
+--header Authorization: Bearer
+
+Why you need to pass Bearer???
+-> In header there are multiple key value, One of the Industry standard is that whenever you are passing the credential,
+   you have to pass the credential into authorization header so that it would be handle by the server accordingly. 
+- Inside Authorization there are multiple things such as BASIC, Bearer.
+   - Basic means that you are simply passing the username and password. 
+   - When passing into a Bearer then server will understand this is not a username and password its "Token"
+   - There might be different logic when token is passed and different logic when username/password is passed. 
+- JWT is always passed with a Bearer not with basic username/password. 
+ 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Q. How Single Sign on(SSO) WORKS???
+- Let's say a company such as App1, App2 and App3 and you want to access it. 
+- Now first it'll go to authentication server providing username and password, it'll get the JWT token.
+- Suppose you're tryig to open the App1, So you have to pass the JWT token also, when the App1 receives the token, it internally tries to verify the JWT. 
+- Once verifed it signed in.   
+- Similary to access the App2, you need to pass the JWT token, it'll verify it and then give the access. 
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Challenges with JWT:
+1. Token Invalidation: lets say, I have blacklisted one user, how to invalidate its Token before its expiration?
+   a. Server needs to keep the list of blacklisted tokens and then DB/cache lookup is required while validating.
+   b. Or, Change the security key, but this will make the JWT invaidate for all users.
+   c. Or, Token should be very short lived. 
+   d. Or, Token should be used only once. 
+
+2. JWT token is encoded, not encrypted. So its less secure.
+   a. Use JWE, Means encrypt the payload part. 
+
+3. Unsecured JWT with "alg": none, such JWT should be rejected. 
+
+4. Jwk exploit: public key shared in this, should not be used to verify the signature.
+   e stands for "exponent" and n stands for "modulus" and combined together they form Public key.
+   {
+      "typ":"JWT",
+      "alg":"RSA",
+      "jwk":{
+               "n":"sfsfsd34324sdf",
+               "e":"ABCDFS3D",
+             "kid":"asfasdf344sfa"
+            }
+   }
+   In the header, jwk "Json wrap key" is shared. n + e makes the public key.
+    
+5. Use "Kid" in the Header to look up the https://Authserverdomain/.well-known/jwks.json to find the Public key.  
